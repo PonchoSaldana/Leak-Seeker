@@ -71,7 +71,7 @@
 
         // Escuchar datos del servidor
         socket.on('sensor-data', (data) => {
-            console.log('Datos recibidos:', data);
+            // console.log('Datos recibidos:', data); // Desactivado para mayor fluidez
             updateUI(data);
         });
 

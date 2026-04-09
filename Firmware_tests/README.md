@@ -1,0 +1,1 @@
+& C:/Python314/python.exe "c:/Users/Bantie-Q/Documents/Firmware/tests/colector de datos.py" -p COM3 -b 115200 -d wand -l alpha
