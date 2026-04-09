@@ -14,17 +14,19 @@ const io = new Server(server, {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'alert')));
 
-// Endpoint para recibir datos desde el MCU o un bridge
-app.post('/api/data', (req, res) => {
-    const data = req.body;
-    
-    // Aquí podrías correr tu modelo entrenado si es un modelo de JS/Python
-    // O simplemente recibir la decisión ya tomada por el MCU
-    
-    // Emitir a todos los clientes web conectados
-    io.emit('sensor-data', data);
-    
-    res.status(200).send({ status: 'ok' });
+// Configuración de WebSockets de alta velocidad
+io.on('connection', (socket) => {
+    console.log('Nueva conexión detectada:', socket.id);
+
+    // Escuchar datos que vienen del MPU (como cliente socket)
+    socket.on('sensor-data', (data) => {
+        // Reenviar los datos a TODOS los navegadores abiertos
+        io.emit('sensor-data', data);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Conexión cerrada:', socket.id);
+    });
 });
 
 // Servir la página principal
