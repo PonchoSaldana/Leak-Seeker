@@ -12,7 +12,7 @@ const io = new Server(server, {
 });
 
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'alert')));
 
 // Endpoint para recibir datos desde el MCU o un bridge
 app.post('/api/data', (req, res) => {
@@ -29,7 +29,7 @@ app.post('/api/data', (req, res) => {
 
 // Servir la página principal
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'alert', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
