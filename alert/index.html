@@ -55,7 +55,7 @@
             <div class="card card-vibration" id="card-vibration">
                 <div class="card-header">
                     <span class="card-label">Vibración</span>
-                    <div class="card-icon">📳</div>
+                    <div class="card-icon"></div>
                 </div>
                 <div class="card-value-row">
                     <span class="card-value" id="val-vibration">0.00</span>
@@ -74,7 +74,7 @@
             <div class="card card-pressure" id="card-pressure">
                 <div class="card-header">
                     <span class="card-label">Presión de Agua</span>
-                    <div class="card-icon">🔵</div>
+                    <div class="card-icon"></div>
                 </div>
                 <div class="card-value-row">
                     <span class="card-value" id="val-pressure">0.00</span>
@@ -93,7 +93,7 @@
             <div class="card card-flow" id="card-flow">
                 <div class="card-header">
                     <span class="card-label">Flujo Diferencial</span>
-                    <div class="card-icon">🌊</div>
+                    <div class="card-icon"></div>
                 </div>
                 <div class="card-value-row">
                     <span class="card-value" id="val-flow">0.00</span>
@@ -130,7 +130,7 @@
         <div class="charts-section">
             <div class="chart-card">
                 <div class="chart-card-header">
-                    <span class="chart-title">📊 Historial en Tiempo Real</span>
+                    <span class="chart-title"> Historial en Tiempo Real</span>
                     <div class="chart-legend">
                         <div class="legend-item">
                             <div class="legend-dot" style="background: #a78bfa;"></div>
@@ -155,7 +155,7 @@
         <!-- ── Raw Data Panel ──────────────────────────── -->
         <div class="raw-data-panel">
             <div class="raw-data-title">
-                🔬 Datos Crudos del MCU
+                 Datos Crudos del MCU
             </div>
             <div class="raw-grid">
                 <div class="raw-item">
@@ -442,9 +442,9 @@
             setCardAlert('card-flow', 'status-flow', data.alertFlow, 'Inconstante', 'Estable');
 
             // ── Toast alerts ──────────────────────────
-            if (data.alertVib)  addAlert('⚡ Vibración Anormal', 'Se detectaron niveles fuera de rango.', 'vib');
-            if (data.alertPres) addAlert('🔴 Presión Elevada', 'Peligro en tuberías.', 'pres');
-            if (data.alertFlow) addAlert('🌊 Cambio de Flujo', 'Flujo inconstante detectado.', 'flow');
+            if (data.alertVib)  addAlert(' Vibración Anormal', 'Se detectaron niveles fuera de rango.', 'vib');
+            if (data.alertPres) addAlert(' Presión Elevada', 'Peligro en tuberías.', 'pres');
+            if (data.alertFlow) addAlert(' Cambio de Flujo', 'Flujo inconstante detectado.', 'flow');
 
             // ── AI Decision ───────────────────────────
             const valveText = $('valve-text');
@@ -457,7 +457,7 @@
                 valveInd.textContent = '🔒';
                 valveInd.classList.add('closed');
                 valveDet.textContent = 'Cierre por IA activado';
-                addAlert('🤖 ACCIÓN IA', 'Flujo cortado por seguridad.', 'ai');
+                addAlert(' ACCIÓN IA', 'Flujo cortado por seguridad.', 'ai');
             } else {
                 valveText.textContent = 'VÁLVULA ABIERTA';
                 valveText.classList.remove('closed');
