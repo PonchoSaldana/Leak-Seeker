@@ -236,15 +236,35 @@ button:hover {
 
 @media (max-width: 768px) {
     body { padding: 1rem; }
-    header { margin-bottom: 1.5rem; }
-    .alerts-container {
-        width: calc(100% - 2rem);
-        top: 1rem;
-        right: 1rem;
-    }
-    .action-card {
+    header { 
+        margin-bottom: 2rem;
         flex-direction: column;
         gap: 1rem;
         text-align: center;
     }
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+    .alerts-container {
+        width: calc(100% - 2rem);
+        top: auto;
+        bottom: 1rem;
+        right: 1rem;
+    }
+    .action-card {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+        padding: 1.5rem;
+    }
+    .valve-status {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo { font-size: 1.5rem; }
+    .card-value { font-size: 1.75rem; }
+    .card { padding: 1.25rem; }
 }
