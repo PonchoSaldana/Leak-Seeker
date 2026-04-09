@@ -12,12 +12,6 @@ const io = new Server(server, {
 });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'alert')));
-
-// ── Estado global ─────────────────────────────────────────────
-let lastData = null;
-let lastTimestamp = null;
-let connectedClients = 0;
 
 // ── Umbrales de alerta ────────────────────────────────────────
 const THRESHOLDS = {
@@ -26,6 +20,11 @@ const THRESHOLDS = {
     pressureLow: 10,      // kPa — presión baja
     flowDeltaHigh: 0.3,   // L/min — diferencial de flujo
 };
+
+// ── Estado global ─────────────────────────────────────────────
+let lastData = null;
+let lastTimestamp = null;
+let connectedClients = 0;
 
 // ── Función para procesar datos crudos del MCU CSV ────────────
 // Formato CSV del MCU: pt01,pt02,vt01,vt02,ft_delta,valveStatus
@@ -98,7 +97,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// ── HTTP POST — alternativa al WebSocket para enviar datos ────
+// ── API Routes ────────────────────────────────────────────────
 app.post('/api/sensor-data', (req, res) => {
     const data = req.body;
     if (!data) return res.status(400).json({ error: 'No data' });
@@ -120,7 +119,6 @@ app.post('/api/sensor-data', (req, res) => {
     res.json({ ok: true });
 });
 
-// ── Estado del sistema ────────────────────────────────────────
 app.get('/api/status', (req, res) => {
     res.json({
         clients: connectedClients,
@@ -128,6 +126,16 @@ app.get('/api/status', (req, res) => {
         uptime: process.uptime(),
         lastData,
     });
+});
+
+// ── Servir archivos estáticos ────────────────────────────────
+// Corregimos la ruta para incluir la carpeta 'web'
+const WEB_PATH = path.join(__dirname, 'web', 'alert');
+app.use(express.static(WEB_PATH));
+
+// ── Servir la página principal (Fallback) ───────────────────
+app.get('/', (req, res) => {
+    res.sendFile(path.join(WEB_PATH, 'index.html'));
 });
 
 // ── Simulación — para probar sin hardware ─────────────────────
@@ -160,11 +168,6 @@ if (process.env.SIMULATE === 'true' || process.argv.includes('--simulate')) {
         io.emit('sensor-data', simData);
     }, 120); // ~8 Hz como el MCU real
 }
-
-// ── Servir la página principal ────────────────────────────────
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'alert', 'index.html'));
-});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
