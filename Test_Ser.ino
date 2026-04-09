@@ -8,7 +8,8 @@
 #include "serializacion.h"
 
 void setup() {
-    Serial1.begin(115200); 
+    // Volvemos a 9600, que es la velocidad que funcionó sin ruido
+    Serial1.begin(9600); 
     pinMode(PIN_VALVULA, INPUT); 
     
     analogReadResolution(12);
@@ -34,6 +35,5 @@ void loop() {
     Serial1.print(ft_delta, 3); Serial1.print(",");
     Serial1.println(valveStatus);
 
-    // Muestreo a 100Hz (10ms) para fluidez absoluta
-    delay(10); 
+    delay(120); 
 }

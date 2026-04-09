@@ -4,131 +4,499 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoreo de Sensores Industrial | Leak-Seeker</title>
+    <meta name="description" content="Dashboard de monitoreo industrial en tiempo real para detección de fugas — Leak-Seeker">
+    <title>Leak-Seeker | Monitoreo en Tiempo Real</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
 </head>
 
 <body>
+    <div class="app-container">
 
-    <header>
-        <div class="logo">Leak-<span>Seeker</span></div>
-        <div class="status-badge" id="mcu-status">
-            <span class="status-dot"></span>
-            Estado: En Línea
-
-        </div>
-    </header>
-
-    <div class="dashboard">
-        <!-- Vibración -->
-        <div class="card" id="card-vibration">
-            <div class="card-header">
-                <span class="card-title">Vibración</span>
+        <!-- ── Header ──────────────────────────────────── -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">💧</div>
+                Leak-<span>Seeker</span>
             </div>
-            <div class="card-value" id="val-vibration">0.00 <small style="font-size: 1rem"></small></div>
-            <p class="card-title" style="font-size: 0.75rem">Estado: Normal</p>
-        </div>
-
-        <!-- Presión -->
-        <div class="card" id="card-pressure">
-            <div class="card-header">
-                <span class="card-title">Presión de Agua</span>
-            </div>
-            <div class="card-value" id="val-pressure">0.00 <small style="font-size: 1rem"></small></div>
-            <p class="card-title" style="font-size: 0.75rem">Estado: Estable</p>
-        </div>
-
-        <!-- Flujo -->
-        <div class="card" id="card-flow">
-            <div class="card-header">
-                <span class="card-title">Flujo de Agua</span>
-            </div>
-            <div class="card-value" id="val-flow">0.00 <small style="font-size: 1rem"></small></div>
-            <p class="card-title" style="font-size: 0.75rem">Estado: Estable</p>
-        </div>
-
-        <!-- Acción de IA -->
-        <div class="card action-card" id="card-ai">
-            <div>
-                <span class="card-title">Decisión del Modelo IA</span>
-                <div class="card-value" id="valve-text" style="font-size: 1.5rem; margin-top: 0.5rem;">Válvula Abierta
+            <div class="header-right">
+                <div class="latency-badge" id="latency-badge">— ms</div>
+                <div class="connection-badge waiting" id="conn-badge">
+                    <div class="conn-dot"></div>
+                    <span id="conn-text">Conectando…</span>
                 </div>
             </div>
-            <div class="valve-status">
-                <div class="status-dot" id="valve-dot"></div>
-                <span id="valve-detail">Operación Normal</span>
+        </header>
+
+        <!-- ── Stats Row ───────────────────────────────── -->
+        <div class="stats-row">
+            <div class="stat-chip">
+                <span class="label">Paquetes</span>
+                <span class="value" id="stat-packets">0</span>
             </div>
+            <div class="stat-chip">
+                <span class="label">Frecuencia</span>
+                <span class="value" id="stat-freq">0 Hz</span>
+            </div>
+            <div class="stat-chip">
+                <span class="label">Última lectura</span>
+                <span class="value" id="stat-last">—</span>
+            </div>
+            <div class="stat-chip">
+                <span class="label">Sesión</span>
+                <span class="value" id="stat-uptime">0s</span>
+            </div>
+        </div>
+
+        <!-- ── Sensor Cards ────────────────────────────── -->
+        <div class="dashboard">
+
+            <!-- Vibración -->
+            <div class="card card-vibration" id="card-vibration">
+                <div class="card-header">
+                    <span class="card-label">Vibración</span>
+                    <div class="card-icon">📳</div>
+                </div>
+                <div class="card-value-row">
+                    <span class="card-value" id="val-vibration">0.00</span>
+                    <span class="card-unit">counts</span>
+                </div>
+                <div class="card-status" id="status-vibration">
+                    <div class="status-indicator"></div>
+                    Normal
+                </div>
+                <div class="mini-chart">
+                    <canvas id="chart-vibration-mini"></canvas>
+                </div>
+            </div>
+
+            <!-- Presión -->
+            <div class="card card-pressure" id="card-pressure">
+                <div class="card-header">
+                    <span class="card-label">Presión de Agua</span>
+                    <div class="card-icon">🔵</div>
+                </div>
+                <div class="card-value-row">
+                    <span class="card-value" id="val-pressure">0.00</span>
+                    <span class="card-unit">kPa</span>
+                </div>
+                <div class="card-status" id="status-pressure">
+                    <div class="status-indicator"></div>
+                    Estable
+                </div>
+                <div class="mini-chart">
+                    <canvas id="chart-pressure-mini"></canvas>
+                </div>
+            </div>
+
+            <!-- Flujo -->
+            <div class="card card-flow" id="card-flow">
+                <div class="card-header">
+                    <span class="card-label">Flujo Diferencial</span>
+                    <div class="card-icon">🌊</div>
+                </div>
+                <div class="card-value-row">
+                    <span class="card-value" id="val-flow">0.00</span>
+                    <span class="card-unit">L/min</span>
+                </div>
+                <div class="card-status" id="status-flow">
+                    <div class="status-indicator"></div>
+                    Estable
+                </div>
+                <div class="mini-chart">
+                    <canvas id="chart-flow-mini"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── AI Decision Card ────────────────────────── -->
+        <div class="dashboard" style="margin-bottom: 1.5rem;">
+            <div class="ai-card" id="card-ai">
+                <div class="ai-left">
+                    <div class="ai-label">
+                        Decisión del Modelo
+                        <span class="ai-badge">IA</span>
+                    </div>
+                    <div class="ai-value" id="valve-text">VÁLVULA ABIERTA</div>
+                </div>
+                <div class="ai-right">
+                    <div class="valve-indicator" id="valve-indicator">🔓</div>
+                    <span class="ai-detail" id="valve-detail">Operación Normal</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Real-Time Charts ────────────────────────── -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <span class="chart-title">📊 Historial en Tiempo Real</span>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: #a78bfa;"></div>
+                            Vibración
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: #38bdf8;"></div>
+                            Presión
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: #34d399;"></div>
+                            Flujo
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-main"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Raw Data Panel ──────────────────────────── -->
+        <div class="raw-data-panel">
+            <div class="raw-data-title">
+                🔬 Datos Crudos del MCU
+            </div>
+            <div class="raw-grid">
+                <div class="raw-item">
+                    <span class="raw-label">PT-01</span>
+                    <span class="raw-value" id="raw-pt01">—</span>
+                </div>
+                <div class="raw-item">
+                    <span class="raw-label">PT-02</span>
+                    <span class="raw-value" id="raw-pt02">—</span>
+                </div>
+                <div class="raw-item">
+                    <span class="raw-label">VT-01</span>
+                    <span class="raw-value" id="raw-vt01">—</span>
+                </div>
+                <div class="raw-item">
+                    <span class="raw-label">VT-02</span>
+                    <span class="raw-value" id="raw-vt02">—</span>
+                </div>
+                <div class="raw-item">
+                    <span class="raw-label">FT Δ</span>
+                    <span class="raw-value" id="raw-ftdelta">—</span>
+                </div>
+                <div class="raw-item">
+                    <span class="raw-label">Válvula</span>
+                    <span class="raw-value" id="raw-valve">—</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Footer ──────────────────────────────────── -->
+        <div class="footer">
+            Los Tlaloques · SEG-01 · Genius Arena Hackathon 2026
         </div>
     </div>
 
+    <!-- ── Alert Toasts ────────────────────────────────── -->
     <div class="alerts-container" id="alerts"></div>
 
+    <!-- ── Scripts ─────────────────────────────────────── -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
-        const alertsContainer = document.getElementById('alerts');
-        let activeAlerts = new Set();
+    (() => {
+        'use strict';
 
-        // Escuchar datos del servidor
-        socket.on('sensor-data', (data) => {
-            // console.log('Datos recibidos:', data); // Desactivado para mayor fluidez
-            updateUI(data);
+        // ── DOM refs ──────────────────────────────────
+        const $ = id => document.getElementById(id);
+        const connBadge   = $('conn-badge');
+        const connText    = $('conn-text');
+        const latencyEl   = $('latency-badge');
+        const alertsBox   = $('alerts');
+
+        // ── State ─────────────────────────────────────
+        let packetCount   = 0;
+        let sessionStart  = Date.now();
+        let lastReceived  = 0;
+        let freqSamples   = [];
+        let activeAlerts   = new Set();
+
+        // ── Chart.js defaults ─────────────────────────
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.size = 10;
+        Chart.defaults.animation.duration = 180;
+
+        const MAX_POINTS = 80;
+
+        // ── Time series buffers ───────────────────────
+        const buffers = {
+            vibration: [],
+            pressure: [],
+            flow: [],
+            labels: [],
+        };
+
+        // ── Mini sparkline factory ────────────────────
+        function createMiniChart(canvasId, color) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return null;
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        borderColor: color,
+                        backgroundColor: color.replace(')', ', 0.08)').replace('rgb', 'rgba'),
+                        fill: true,
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        tension: 0.35,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false },
+                    },
+                    animation: { duration: 120 },
+                }
+            });
+        }
+
+        const miniVib   = createMiniChart('chart-vibration-mini', 'rgb(167, 139, 250)');
+        const miniPres  = createMiniChart('chart-pressure-mini', 'rgb(56, 189, 248)');
+        const miniFlow  = createMiniChart('chart-flow-mini', 'rgb(52, 211, 153)');
+
+        // ── Main chart ────────────────────────────────
+        const mainChart = new Chart($('chart-main'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Vibración',
+                        data: [],
+                        borderColor: '#a78bfa',
+                        backgroundColor: 'rgba(167,139,250,0.06)',
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.3,
+                        yAxisID: 'y1',
+                    },
+                    {
+                        label: 'Presión',
+                        data: [],
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56,189,248,0.06)',
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.3,
+                        yAxisID: 'y2',
+                    },
+                    {
+                        label: 'Flujo',
+                        data: [],
+                        borderColor: '#34d399',
+                        backgroundColor: 'rgba(52,211,153,0.06)',
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.3,
+                        yAxisID: 'y3',
+                    },
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(17,24,39,0.9)',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#94a3b8',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        padding: 10,
+                        bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        grid: { display: false },
+                        ticks: { maxTicksLimit: 8, font: { size: 9 } },
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'left',
+                        grid: { color: 'rgba(167,139,250,0.06)' },
+                        ticks: { color: '#a78bfa', font: { size: 9 } },
+                        title: { display: false },
+                    },
+                    y2: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { display: false },
+                        ticks: { color: '#38bdf8', font: { size: 9 } },
+                    },
+                    y3: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { display: false },
+                        ticks: { display: false },
+                    },
+                },
+                animation: { duration: 150 },
+            }
         });
 
+        // ── Push data to buffers + charts ─────────────
+        function pushData(vibration, pressure, flow) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-MX', { hour12: false });
+
+            // Buffers
+            buffers.labels.push(timeStr);
+            buffers.vibration.push(vibration);
+            buffers.pressure.push(pressure);
+            buffers.flow.push(flow);
+
+            if (buffers.labels.length > MAX_POINTS) {
+                buffers.labels.shift();
+                buffers.vibration.shift();
+                buffers.pressure.shift();
+                buffers.flow.shift();
+            }
+
+            // Main chart
+            mainChart.data.labels = [...buffers.labels];
+            mainChart.data.datasets[0].data = [...buffers.vibration];
+            mainChart.data.datasets[1].data = [...buffers.pressure];
+            mainChart.data.datasets[2].data = [...buffers.flow];
+            mainChart.update('none');
+
+            // Mini charts
+            function updateMini(chart, arr) {
+                if (!chart) return;
+                chart.data.labels = buffers.labels.slice(-30);
+                chart.data.datasets[0].data = arr.slice(-30);
+                chart.update('none');
+            }
+            updateMini(miniVib, buffers.vibration);
+            updateMini(miniPres, buffers.pressure);
+            updateMini(miniFlow, buffers.flow);
+        }
+
+        // ── Flash value animation ─────────────────────
+        function flashValue(el) {
+            el.classList.remove('value-updated');
+            void el.offsetWidth; // force reflow
+            el.classList.add('value-updated');
+        }
+
+        // ── Update UI with sensor data ────────────────
         function updateUI(data) {
-            // data expected: { vibration: number, pressure: number, flow: number, alertVib: bool, alertPres: bool, alertFlow: bool, valveClosed: bool }
+            const now = Date.now();
+            packetCount++;
+
+            // Frequency calc
+            if (lastReceived > 0) {
+                freqSamples.push(now - lastReceived);
+                if (freqSamples.length > 20) freqSamples.shift();
+            }
+            lastReceived = now;
+
+            // ── Values ────────────────────────────────
+            const vibVal = $('val-vibration');
+            const presVal = $('val-pressure');
+            const flowVal = $('val-flow');
 
             if (data.vibration !== undefined) {
-                document.getElementById('val-vibration').innerHTML = `${data.vibration.toFixed(2)} <small style="font-size: 1rem">g</small>`;
+                vibVal.textContent = data.vibration.toFixed(1);
+                flashValue(vibVal);
             }
             if (data.pressure !== undefined) {
-                document.getElementById('val-pressure').innerHTML = `${data.pressure.toFixed(1)} <small style="font-size: 1rem">PSI</small>`;
+                presVal.textContent = data.pressure.toFixed(1);
+                flashValue(presVal);
             }
             if (data.flow !== undefined) {
-                document.getElementById('val-flow').innerHTML = `${data.flow.toFixed(1)} <small style="font-size: 1rem">L/min</small>`;
+                flowVal.textContent = data.flow.toFixed(2);
+                flashValue(flowVal);
             }
 
-            // Manejo de Alertas
-            if (data.alertVib) {
-                document.getElementById('card-vibration').classList.add('alert');
-                addAlert('Vibración Anormal', 'Se detectaron niveles fuera de rango.', 'vib');
-            } else {
-                document.getElementById('card-vibration').classList.remove('alert');
-            }
+            // ── Charts ───────────────────────────────
+            pushData(
+                data.vibration || 0,
+                data.pressure || 0,
+                data.flow || 0
+            );
 
-            if (data.alertPres) {
-                document.getElementById('card-pressure').classList.add('alert');
-                addAlert('Presión Elevada', 'Peligro en tuberías.', 'pres');
-            } else {
-                document.getElementById('card-pressure').classList.remove('alert');
-            }
+            // ── Card alert states ─────────────────────
+            setCardAlert('card-vibration', 'status-vibration', data.alertVib, 'Anormal', 'Normal');
+            setCardAlert('card-pressure', 'status-pressure', data.alertPres, 'Elevada', 'Estable');
+            setCardAlert('card-flow', 'status-flow', data.alertFlow, 'Inconstante', 'Estable');
 
-            if (data.alertFlow) {
-                document.getElementById('card-flow').classList.add('alert');
-                addAlert('Cambio de Flujo', 'Flujo inconstante detectado.', 'flow');
-            } else {
-                document.getElementById('card-flow').classList.remove('alert');
-            }
+            // ── Toast alerts ──────────────────────────
+            if (data.alertVib)  addAlert('⚡ Vibración Anormal', 'Se detectaron niveles fuera de rango.', 'vib');
+            if (data.alertPres) addAlert('🔴 Presión Elevada', 'Peligro en tuberías.', 'pres');
+            if (data.alertFlow) addAlert('🌊 Cambio de Flujo', 'Flujo inconstante detectado.', 'flow');
 
-            // Decisión del Modelo
-            const valveText = document.getElementById('valve-text');
-            const valveDot = document.getElementById('valve-dot');
-            const valveDetail = document.getElementById('valve-detail');
+            // ── AI Decision ───────────────────────────
+            const valveText = $('valve-text');
+            const valveInd  = $('valve-indicator');
+            const valveDet  = $('valve-detail');
 
             if (data.valveClosed) {
-                valveText.innerText = "VÁLVULA CERRADA";
-                valveText.style.color = "#dc2626"; // Red
-                valveDot.className = "status-dot off";
-                valveDetail.innerText = "Cierre por IA activado";
-                addAlert('ACCIÓN IA', 'Flujo cortado por seguridad.', 'ai');
+                valveText.textContent = 'VÁLVULA CERRADA';
+                valveText.classList.add('closed');
+                valveInd.textContent = '🔒';
+                valveInd.classList.add('closed');
+                valveDet.textContent = 'Cierre por IA activado';
+                addAlert('🤖 ACCIÓN IA', 'Flujo cortado por seguridad.', 'ai');
             } else {
-                valveText.innerText = "Válvula Abierta";
-                valveText.style.color = "#0c4a6e"; // Dark blue
-                valveDot.className = "status-dot";
-                valveDetail.innerText = "Operación Normal";
+                valveText.textContent = 'VÁLVULA ABIERTA';
+                valveText.classList.remove('closed');
+                valveInd.textContent = '🔓';
+                valveInd.classList.remove('closed');
+                valveDet.textContent = 'Operación Normal';
+            }
+
+            // ── Raw data ──────────────────────────────
+            if (data.pt01 !== undefined)    $('raw-pt01').textContent   = data.pt01.toFixed(2) + ' kPa';
+            if (data.pt02 !== undefined)    $('raw-pt02').textContent   = data.pt02.toFixed(2) + ' kPa';
+            if (data.vt01 !== undefined)    $('raw-vt01').textContent   = data.vt01;
+            if (data.vt02 !== undefined)    $('raw-vt02').textContent   = data.vt02;
+            if (data.ftDelta !== undefined) $('raw-ftdelta').textContent = data.ftDelta.toFixed(3) + ' L/min';
+            $('raw-valve').textContent = data.valveClosed ? '🔒 CERRADA' : '🔓 Abierta';
+
+            // ── Latency ───────────────────────────────
+            if (data.timestamp) {
+                const lat = Date.now() - data.timestamp;
+                latencyEl.textContent = lat + ' ms';
             }
         }
 
+        // ── Card alert helper ─────────────────────────
+        function setCardAlert(cardId, statusId, isAlert, alertText, normalText) {
+            const card = $(cardId);
+            const status = $(statusId);
+            if (isAlert) {
+                card.classList.add('alert-active');
+                status.className = 'card-status danger';
+                status.innerHTML = '<div class="status-indicator"></div>' + alertText;
+            } else {
+                card.classList.remove('alert-active');
+                status.className = 'card-status';
+                status.innerHTML = '<div class="status-indicator"></div>' + normalText;
+            }
+        }
+
+        // ── Toast system ──────────────────────────────
         function addAlert(title, message, id) {
             if (activeAlerts.has(id)) return;
             activeAlerts.add(id);
@@ -137,27 +505,80 @@
             toast.className = 'alert-toast';
             toast.id = 'alert-' + id;
             toast.innerHTML = `
-                <div class="alert-title"> ${title}</div>
+                <div class="alert-title">${title}</div>
                 <div class="alert-description">${message}</div>
             `;
-            alertsContainer.appendChild(toast);
+            alertsBox.appendChild(toast);
 
-            // Auto remove after 6s
-            setTimeout(() => {
-                removeAlert(id);
-            }, 6000);
+            setTimeout(() => removeAlert(id), 5000);
         }
 
         function removeAlert(id) {
-            const toast = document.getElementById('alert-' + id);
+            const toast = $('alert-' + id);
             if (toast) {
-                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                toast.style.animation = 'toastSlide 0.3s ease-out reverse forwards';
                 setTimeout(() => {
                     toast.remove();
                     activeAlerts.delete(id);
                 }, 300);
             }
         }
+
+        // ── Stats ticker ──────────────────────────────
+        setInterval(() => {
+            $('stat-packets').textContent = packetCount.toLocaleString();
+
+            // Frequency
+            if (freqSamples.length > 2) {
+                const avg = freqSamples.reduce((a, b) => a + b, 0) / freqSamples.length;
+                $('stat-freq').textContent = (1000 / avg).toFixed(1) + ' Hz';
+            }
+
+            // Last received
+            if (lastReceived > 0) {
+                const ago = Math.floor((Date.now() - lastReceived) / 1000);
+                $('stat-last').textContent = ago === 0 ? 'ahora' : ago + 's atrás';
+            }
+
+            // Session uptime
+            const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+            if (elapsed < 60) {
+                $('stat-uptime').textContent = elapsed + 's';
+            } else if (elapsed < 3600) {
+                $('stat-uptime').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's';
+            } else {
+                const h = Math.floor(elapsed / 3600);
+                const m = Math.floor((elapsed % 3600) / 60);
+                $('stat-uptime').textContent = h + 'h ' + m + 'm';
+            }
+        }, 1000);
+
+        // ── Socket.IO ─────────────────────────────────
+        const socket = io({
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: Infinity,
+        });
+
+        socket.on('connect', () => {
+            connBadge.className = 'connection-badge';
+            connText.textContent = 'En Línea';
+        });
+
+        socket.on('disconnect', () => {
+            connBadge.className = 'connection-badge offline';
+            connText.textContent = 'Desconectado';
+        });
+
+        socket.on('connect_error', () => {
+            connBadge.className = 'connection-badge offline';
+            connText.textContent = 'Error';
+        });
+
+        socket.on('sensor-data', (data) => {
+            updateUI(data);
+        });
+    })();
     </script>
 </body>
 
