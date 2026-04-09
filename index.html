@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoreo de Sensores Industrial | Leak-Seeker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">Leak-<span>Seeker</span></div>
+        <div class="status-badge" id="mcu-status">
+            <span class="status-dot"></span>
+            Estado: En Línea
+        </div>
+    </header>
+
+    <div class="dashboard">
+        <!-- Vibración -->
+        <div class="card" id="card-vibration">
+            <div class="card-header">
+                <span class="card-title">Vibración</span>
+            </div>
+            <div class="card-value" id="val-vibration">0.02 <small style="font-size: 1rem"></small></div>
+            <p class="card-title" style="font-size: 0.75rem">Estado: Normal</p>
+        </div>
+
+        <!-- Presión -->
+        <div class="card" id="card-pressure">
+            <div class="card-header">
+                <span class="card-title">Presión de Agua</span>
+            </div>
+            <div class="card-value" id="val-pressure">45.2 <small style="font-size: 1rem"></small></div>
+            <p class="card-title" style="font-size: 0.75rem">Estado: Estable</p>
+        </div>
+
+        <!-- Flujo -->
+        <div class="card" id="card-flow">
+            <div class="card-header">
+                <span class="card-title">Flujo de Agua</span>
+            </div>
+            <div class="card-value" id="val-flow">12.5 <small style="font-size: 1rem"></small></div>
+            <p class="card-title" style="font-size: 0.75rem">Estado: Estable</p>
+        </div>
+
+        <!-- Acción de IA -->
+        <div class="card action-card" id="card-ai">
+            <div>
+                <span class="card-title">Decisión del Modelo IA</span>
+                <div class="card-value" id="valve-text" style="font-size: 1.5rem; margin-top: 0.5rem;">Válvula Abierta
+                </div>
+            </div>
+            <div class="valve-status">
+                <div class="status-dot" id="valve-dot"></div>
+                <span id="valve-detail">Operación Normal</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="simulateAlert('vibration')">Simular Vibración</button>
+        <button onclick="simulateAlert('pressure')">Simular Presión</button>
+        <button onclick="simulateAlert('flow')">Simular Flujo</button>
+        <button class="btn-danger" onclick="simulateSystemFailure()">Falla Sistémica (Cerrar)</button>
+    </div>
+
+    <div class="alerts-container" id="alerts"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const alertsContainer = document.getElementById('alerts');
+        let activeAlerts = new Set();
+
+        // Escuchar datos del servidor
+        socket.on('sensor-data', (data) => {
+            console.log('Datos recibidos:', data);
+            updateUI(data);
+        });
+
+        function updateUI(data) {
+            // data expected: { vibration: number, pressure: number, flow: number, alertVib: bool, alertPres: bool, alertFlow: bool, valveClosed: bool }
+
+            if (data.vibration !== undefined) {
+                document.getElementById('val-vibration').innerHTML = `${data.vibration.toFixed(2)} <small style="font-size: 1rem">g</small>`;
+            }
+            if (data.pressure !== undefined) {
+                document.getElementById('val-pressure').innerHTML = `${data.pressure.toFixed(1)} <small style="font-size: 1rem">PSI</small>`;
+            }
+            if (data.flow !== undefined) {
+                document.getElementById('val-flow').innerHTML = `${data.flow.toFixed(1)} <small style="font-size: 1rem">L/min</small>`;
+            }
+
+            // Manejo de Alertas
+            if (data.alertVib) {
+                document.getElementById('card-vibration').classList.add('alert');
+                addAlert('Vibración Anormal', 'Se detectaron niveles fuera de rango.', 'vib');
+            } else {
+                document.getElementById('card-vibration').classList.remove('alert');
+            }
+
+            if (data.alertPres) {
+                document.getElementById('card-pressure').classList.add('alert');
+                addAlert('Presión Elevada', 'Peligro en tuberías.', 'pres');
+            } else {
+                document.getElementById('card-pressure').classList.remove('alert');
+            }
+
+            if (data.alertFlow) {
+                document.getElementById('card-flow').classList.add('alert');
+                addAlert('Cambio de Flujo', 'Flujo inconstante detectado.', 'flow');
+            } else {
+                document.getElementById('card-flow').classList.remove('alert');
+            }
+
+            // Decisión del Modelo
+            const valveText = document.getElementById('valve-text');
+            const valveDot = document.getElementById('valve-dot');
+            const valveDetail = document.getElementById('valve-detail');
+
+            if (data.valveClosed) {
+                valveText.innerText = "VÁLVULA CERRADA";
+                valveText.style.color = "#dc2626"; // Red
+                valveDot.className = "status-dot off";
+                valveDetail.innerText = "Cierre por IA activado";
+                addAlert('ACCIÓN IA', 'Flujo cortado por seguridad.', 'ai');
+            } else {
+                valveText.innerText = "Válvula Abierta";
+                valveText.style.color = "#0c4a6e"; // Dark blue
+                valveDot.className = "status-dot";
+                valveDetail.innerText = "Operación Normal";
+            }
+        }
+
+        function addAlert(title, message, id) {
+            if (activeAlerts.has(id)) return;
+            activeAlerts.add(id);
+
+            const toast = document.createElement('div');
+            toast.className = 'alert-toast';
+            toast.id = 'alert-' + id;
+            toast.innerHTML = `
+                <div class="alert-title"> ${title}</div>
+                <div class="alert-description">${message}</div>
+            `;
+            alertsContainer.appendChild(toast);
+
+            // Auto remove after 5s for demo
+            setTimeout(() => {
+                removeAlert(id);
+            }, 6000);
+        }
+
+        function removeAlert(id) {
+            const toast = document.getElementById('alert-' + id);
+            if (toast) {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => {
+                    toast.remove();
+                    activeAlerts.delete(id);
+                }, 300);
+            }
+        }
+
+        function simulateAlert(type) {
+            const card = document.getElementById(`card-${type}`);
+            const val = document.getElementById(`val-${type}`);
+
+            card.classList.add('alert');
+
+            if (type === 'vibration') {
+                val.innerText = "2.85 g";
+                addAlert('Vibración Anormal', 'Se detectaron niveles de aceleración fuera de rango en el eje Z.', 'vib');
+            } else if (type === 'pressure') {
+                val.innerText = "88.4 PSI";
+                addAlert('Presión Elevada', 'La presión del agua ha superado el límite de seguridad.', 'pres');
+            } else if (type === 'flow') {
+                val.innerText = "0.5 L/min";
+                addAlert('Bajo Flujo', 'Se detectó una disminución drástica en el flujo de entrada.', 'flow');
+            }
+
+            setTimeout(() => {
+                card.classList.remove('alert');
+                // Reset values for simulation
+                if (type === 'vibration') val.innerHTML = '0.02 <small style="font-size: 1rem">g</small>';
+                if (type === 'pressure') val.innerHTML = '45.2 <small style="font-size: 1rem">PSI</small>';
+                if (type === 'flow') val.innerHTML = '12.5 <small style="font-size: 1rem">L/min</small>';
+            }, 5000);
+        }
+
+        function simulateSystemFailure() {
+            addAlert('FALLA SISTÉMICA', 'Múltiples sensores fuera de rango. El modelo ha decidido cerrar el flujo.', 'system');
+
+            const valveText = document.getElementById('valve-text');
+            const valveDot = document.getElementById('valve-dot');
+            const valveDetail = document.getElementById('valve-detail');
+
+            valveText.innerText = "VÁLVULA CERRADA";
+            valveText.style.color = "#dc2626"; // Red
+            valveDot.className = "status-dot off";
+            valveDetail.innerText = "Cierre Preventivo ACTIVADO";
+
+            // Visual feedback on multiple cards
+            document.querySelectorAll('.card').forEach(c => c.classList.add('alert'));
+
+            setTimeout(() => {
+                document.querySelectorAll('.card').forEach(c => c.classList.remove('alert'));
+                valveText.innerText = "Válvula Abierta";
+                valveText.style.color = "#0c4a6e"; // Dark blue
+                valveDot.className = "status-dot";
+                valveDetail.innerText = "Operación Normal";
+            }, 8000);
+        }
+    </script>
+</body>
+
+</html>
