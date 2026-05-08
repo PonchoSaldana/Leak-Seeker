@@ -1,4 +1,4 @@
-# Leak-Seeker (Proyecto Realizado en el Hackaton Genius Area del Talend Land 2026
+# Leak-Seeker (Proyecto Realizado en el Hackaton Genius Area del Talend Land 2026)
 
 **Monitoreo en tiempo real** para la detección de anomalías y fugas en sistemas de tuberías utilizando un ensamble de sensores y decisiones basadas en un modelo ded Inteligencia Artificial.
 
